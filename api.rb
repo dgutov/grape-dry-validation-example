@@ -77,20 +77,7 @@ module Apples
     resource :orders do
       desc 'Create new'
       params do
-        # requires :order, type: OrderSchema
-        # requires :order2, type: OrderSchema
-        requires :order, type: Hash do
-          requires :baskets, type: Array do
-            requires :color, type: String
-            requires :count, type: Integer
-          end
-        end
-        requires :order2, type: Hash do
-          requires :baskets, type: Array do
-            requires :color, type: String
-            requires :count, type: Integer
-          end
-        end
+        requires :order, type: OrderSchema
       end
       post do
         Order.create!(declared(params))

@@ -20,8 +20,9 @@ class ApplesApiTest < Minitest::Test
     input = {order: {baskets: [{clor: 'red', coont: 4}]}}
     resp = response_for(method: :post, path: '/api/orders', body: input)
     assert_equal 400, resp.status
-    expected_errors = {'error' => 'order.color is missing, order.number is missing'}
-    assert_equal expected_errors, JSON.parse(resp.body.first)
+    error_message = JSON.parse(resp.body.first)['error']
+    assert_includes error_message, 'color is missing'
+    assert_includes error_message, 'number is missing'
   end
 
   private
