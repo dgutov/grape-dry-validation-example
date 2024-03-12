@@ -24,6 +24,8 @@ module Apples
       res = []
 
       hsh.each do |key, value|
+        key = "[#{key}]"
+
         case value
         when String
           res << [key, value]
@@ -32,13 +34,13 @@ module Apples
             res << [key, s]
           end
         else # Should be Hash.
-          errors_array(value).each do |s|
-            res << [key, s]
+          errors_array(value).each do |subkey, s|
+            res << [key + subkey.to_s, s]
           end
         end
       end
 
-      res.map! { |arr| arr.join(' ') }
+      res.map! { |arr| arr.compact.join(' ') }
     end
   end
 

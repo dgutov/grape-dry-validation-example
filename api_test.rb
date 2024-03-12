@@ -28,8 +28,20 @@ class ApplesApiTest < Minitest::Test
     resp = response_for(method: :post, path: '/api/orders', body: input)
     assert_equal 400, resp.status
     error_message = JSON.parse(resp.body.first)['error']
-    assert_includes error_message, 'color is missing'
-    assert_includes error_message, 'number is missing'
+    assert_includes error_message, '[color] is missing'
+    assert_includes error_message, '[count] is missing'
+  end
+
+  def test_post_invalid_wrong_attributes_2
+    input = {order: {baskets: [{clor: 10, count: 'red'}]}}
+    resp = response_for(method: :post, path: '/api/orders', body: input)
+    assert_equal 400, resp.status
+    error_message = JSON.parse(resp.body.first)['error']
+    # We fail here:
+    # -"order[baskets][0][color] is missing, order[baskets][0][count] is invalid"
+    # +"order [baskets][0][color] is missing, [baskets][0][count] must be an integer"
+    assert_equal "order[baskets][0][color] is missing, order[baskets][0][count] is invalid",
+                 error_message
   end
 
   private
