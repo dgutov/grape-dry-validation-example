@@ -2,8 +2,6 @@ require 'grape'
 require 'dry-validation'
 
 module Apples
-  ContractError = Class.new(StandardError)
-
   module Contractable
     def contract(kontrakt = nil, &block)
       unless kontrakt
@@ -26,15 +24,7 @@ module Apples
         res.to_h
       else
         message = errors_array(res.errors.to_h, false).join(', ')
-        raise ContractError.new(message)
-      end
-    end
-
-    def self.api_changed(api)
-      super
-
-      api.rescue_from ContractError do |e|
-        error!({error: e.message}, 400)
+        raise Grape::Exceptions::Base.new(status: 400, message: message, headers: header)
       end
     end
 
