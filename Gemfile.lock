@@ -17,7 +17,7 @@ GEM
     concurrent-ruby (1.2.3)
     connection_pool (2.4.1)
     drb (2.2.1)
-    dry-configurable (1.1.0)
+    dry-configurable (1.0.1)
       dry-core (~> 1.0, < 2)
       zeitwerk (~> 2.6)
     dry-core (1.0.0)
@@ -37,8 +37,7 @@ GEM
       dry-logic (>= 1.4, < 2)
       dry-types (>= 1.7, < 2)
       zeitwerk (~> 2.6)
-    dry-types (1.7.2)
-      bigdecimal (~> 3.0)
+    dry-types (1.7.1)
       concurrent-ruby (~> 1.0)
       dry-core (~> 1.0)
       dry-inflector (~> 1.0)
@@ -83,7 +82,9 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  dry-configurable (= 1.0.1)
   dry-core (= 1.0.0)
+  dry-types (= 1.7.1)
   dry-validation
   grape
   rackup (= 1.0.0)
