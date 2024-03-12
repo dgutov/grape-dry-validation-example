@@ -45,7 +45,6 @@ class ApplesApiTest < Minitest::Test
     resp = response_for(method: :post, path: '/api/orders', body: input)
     assert_equal 400, resp.status
     error_message = JSON.parse(resp.body.first)['error']
-    # We fail here:
     assert_equal "order[baskets][0][color] is missing, order[baskets][0][count] must be an integer",
                  error_message
   end
