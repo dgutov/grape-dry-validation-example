@@ -16,6 +16,13 @@ class ApplesApiTest < Minitest::Test
     assert_equal 400, resp.status
   end
 
+  def test_post_valid_attributes
+    input = {order: {baskets: [{color: 'red', count: 4}]}}
+    resp = response_for(method: :post, path: '/api/orders', body: input)
+    assert_equal 201, resp.status
+    assert_includes resp.body[0], '"color":"red"'
+  end
+
   def test_post_invalid_wrong_attributes
     input = {order: {baskets: [{clor: 'red', coont: 4}]}}
     resp = response_for(method: :post, path: '/api/orders', body: input)

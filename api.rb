@@ -49,7 +49,7 @@ module Apples
 
   BasketSchema = Dry::Schema.Params do
     required(:color).filled(ColorString)
-    required(:number).filled(:integer)
+    required(:count).filled(:integer)
   end
 
   OrderSchema = build_schema do
@@ -58,15 +58,17 @@ module Apples
 
   class Order
     class << self
-      attr_reader :orders
+      attr_accessor :orders
     end
 
     def self.create!(params)
-      self.class.orders ||= []
+      self.orders ||= []
 
       raise "Unexpected!" unless OrderSchema.call(params).success?
 
-      self.class.orders << params
+      self.orders << params
+
+      params
     end
   end
 
@@ -80,7 +82,8 @@ module Apples
         requires :order, type: OrderSchema
       end
       post do
-        Order.create!(declared(params))
+        order = Order.create!(declared(params)[:order])
+        body order
       end
     end
   end
