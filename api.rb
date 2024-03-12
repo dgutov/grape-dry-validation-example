@@ -39,7 +39,7 @@ module Apples
     end
   end
 
-  module Contractable
+  module ContractDSL
     def contract(kontrakt = nil, &block)
       unless kontrakt
         kontrakt = Class.new(Dry::Validation::Contract, &block)
@@ -89,7 +89,7 @@ module Apples
     end
   end
 
-  ::Grape::API::Instance.extend(Contractable)
+  ::Grape::API::Instance.extend(ContractDSL)
 
   class API < Grape::API
     format :json
