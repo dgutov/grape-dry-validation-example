@@ -2,30 +2,11 @@ require 'grape'
 require 'dry-validation'
 
 module Apples
-  module Contractable
-    def contract(kontrakt = nil, &block)
-      unless kontrakt
-        kontrakt = Class.new(Dry::Validation::Contract, &block)
-      end
+  class ContractError < Grape::Exceptions::Base
+    def initialize(errors:, headers: nil)
+      message = errors_array(errors.to_h, false).join(', ')
 
-      self.namespace_stackable(:contract, kontrakt)
-    end
-  end
-
-  module ContractHelper
-    def contract_params
-      kontrakt = namespace_stackable(:contract).last
-
-      raise "No contract defined" unless kontrakt
-
-      res = kontrakt.new.call(params)
-
-      if res.success?
-        res.to_h
-      else
-        message = errors_array(res.errors.to_h, false).join(', ')
-        raise Grape::Exceptions::Base.new(status: 400, message: message, headers: header)
-      end
+      super(status: 400, message: message, headers: headers)
     end
 
     private
@@ -55,6 +36,32 @@ module Apples
       end
 
       res.map! { |arr| arr.compact.join(' ') }
+    end
+  end
+
+  module Contractable
+    def contract(kontrakt = nil, &block)
+      unless kontrakt
+        kontrakt = Class.new(Dry::Validation::Contract, &block)
+      end
+
+      self.namespace_stackable(:contract, kontrakt)
+    end
+  end
+
+  module ContractHelper
+    def contract_params
+      kontrakt = namespace_stackable(:contract).last
+
+      raise "No contract defined" unless kontrakt
+
+      res = kontrakt.new.call(params)
+
+      if res.success?
+        res.to_h
+      else
+        raise ContractError.new(errors: res.errors, headers: header)
+      end
     end
   end
 
