@@ -90,12 +90,11 @@ module Apples
   end
 
   ::Grape::API::Instance.extend(ContractDSL)
+  ::Grape::DSL::InsideRoute.include(ContractHelper)
 
   class API < Grape::API
     format :json
     prefix :api
-
-    helpers ContractHelper
 
     resource :orders do
       desc 'Create new'
