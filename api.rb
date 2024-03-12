@@ -5,7 +5,11 @@ module Apples
   ContractError = Class.new(StandardError)
 
   module Contractable
-    def contract(kontrakt)
+    def contract(kontrakt = nil, &block)
+      unless kontrakt
+        kontrakt = Class.new(Dry::Validation::Contract, &block)
+      end
+
       self.namespace_stackable(:contract, kontrakt)
     end
   end
@@ -75,12 +79,6 @@ module Apples
     required(:baskets).array(BasketSchema)
   end
 
-  class CreateOrderContract < Dry::Validation::Contract
-    params do
-      required(:order).filled(OrderSchema)
-    end
-  end
-
   class Order
     class << self
       attr_accessor :orders
@@ -88,9 +86,6 @@ module Apples
 
     def self.create!(params)
       self.orders ||= []
-
-      raise "Unexpected!" unless CreateOrderContract.new.call(params).success?
-
       self.orders << params
 
       params
@@ -107,7 +102,17 @@ module Apples
 
     resource :orders do
       desc 'Create new'
-      contract CreateOrderContract
+      contract do
+        params do
+          required(:order).filled(OrderSchema)
+        end
+
+        rule(:order) do
+          next if value[:baskets].count < 10
+
+          key.failure('contains too many baskets')
+        end
+      end
       post do
         order = Order.create!(contract_params)
         body order

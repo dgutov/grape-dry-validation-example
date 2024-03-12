@@ -42,6 +42,14 @@ class ApplesApiTest < Minitest::Test
                  error_message
   end
 
+  def test_post_too_many_baskets
+    input = {order: {baskets: [{color: 'red', count: 5}] * 11}}
+    resp = response_for(method: :post, path: '/api/orders', body: input)
+    assert_equal 400, resp.status
+    error_message = JSON.parse(resp.body.first)['error']
+    assert_equal 'order contains too many baskets', error_message
+  end
+
   private
 
   def response_for(method: :get, body: nil, path:)
