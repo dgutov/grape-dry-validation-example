@@ -4,17 +4,37 @@ require 'dry-validation'
 module Apples
   ContractError = Class.new(StandardError)
 
-  class ApiContract < Dry::Validation::Contract
-    def validate!(value)
-      res = call(value)
+  module Contractable
+    def contract(kontrakt)
+      self.namespace_stackable(:contract, kontrakt)
+    end
+  end
+
+  module ContractHelper
+    def contract_params
+      kontrakt = namespace_stackable(:contract).last
+
+      raise "No contract defined" unless kontrakt
+
+      res = kontrakt.new.call(params)
 
       if res.success?
-        yield res.to_h
+        res.to_h
       else
         message = errors_array(res.errors.to_h, false).join(', ')
         raise ContractError.new(message)
       end
     end
+
+    def self.api_changed(api)
+      super
+
+      api.rescue_from ContractError do |e|
+        error!({error: e.message}, 400)
+      end
+    end
+
+    private
 
     def errors_array(hsh, decorate = true)
       res = []
@@ -55,7 +75,7 @@ module Apples
     required(:baskets).array(BasketSchema)
   end
 
-  class CreateOrderContract < ApiContract
+  class CreateOrderContract < Dry::Validation::Contract
     params do
       required(:order).filled(OrderSchema)
     end
@@ -77,21 +97,20 @@ module Apples
     end
   end
 
+  ::Grape::API::Instance.extend(Contractable)
+
   class API < Grape::API
     format :json
     prefix :api
 
-    rescue_from ContractError do |e|
-      error!({error: e.message}, 400)
-    end
+    helpers ContractHelper
 
     resource :orders do
       desc 'Create new'
+      contract CreateOrderContract
       post do
-        CreateOrderContract.new.validate!(params) do |attrs|
-          order = Order.create!(attrs)
-          body order
-        end
+        order = Order.create!(contract_params)
+        body order
       end
     end
   end
