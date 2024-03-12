@@ -23,13 +23,21 @@ class ApplesApiTest < Minitest::Test
     assert_includes resp.body[0], '"color":"red"'
   end
 
+  def test_post_valid_attributes_with_default
+    input = {order: {baskets: [{color: 'red'}]}}
+    resp = response_for(method: :post, path: '/api/orders', body: input)
+    assert_equal 201, resp.status
+    assert_includes resp.body[0], '"color":"red"'
+    assert_includes resp.body[0], '"count":10'
+  end
+
   def test_post_invalid_wrong_attributes
-    input = {order: {baskets: [{clor: 'red', coont: 4}]}}
+    input = {order: {baskets: [{clor: 'red', count: 'blue'}]}}
     resp = response_for(method: :post, path: '/api/orders', body: input)
     assert_equal 400, resp.status
     error_message = JSON.parse(resp.body.first)['error']
     assert_includes error_message, '[color] is missing'
-    assert_includes error_message, '[count] is missing'
+    assert_includes error_message, '[count] must be an integer'
   end
 
   def test_post_invalid_wrong_attributes_2

@@ -5,7 +5,7 @@ module Apples
 
   BasketSchema = Dry::Schema.Params do
     required(:color).filled(ColorString)
-    required(:count).filled(:integer)
+    optional(:count).filled(Dry::Types['integer'].default(10))
   end
 
   OrderSchema = Dry::Schema.Params do
