@@ -38,9 +38,7 @@ class ApplesApiTest < Minitest::Test
     assert_equal 400, resp.status
     error_message = JSON.parse(resp.body.first)['error']
     # We fail here:
-    # -"order[baskets][0][color] is missing, order[baskets][0][count] is invalid"
-    # +"order [baskets][0][color] is missing, [baskets][0][count] must be an integer"
-    assert_equal "order[baskets][0][color] is missing, order[baskets][0][count] is invalid",
+    assert_equal "order[baskets][0][color] is missing, order[baskets][0][count] must be an integer",
                  error_message
   end
 

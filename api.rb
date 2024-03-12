@@ -2,29 +2,29 @@ require 'grape'
 require 'dry-validation'
 
 module Apples
-  ColorString = Dry::Types['string'].constrained(included_in: %w(green red yellow))
+  ContractError = Class.new(StandardError)
 
-  module GrapeCoercible
-    def parse(value)
+  class ApiContract < Dry::Validation::Contract
+    def validate!(value)
       res = call(value)
 
       if res.success?
-        return res.to_h
+        yield res.to_h
       else
-        message = errors_array(res.errors.to_h).join(', ')
-        Grape::Types::InvalidValue.new(message)
+        message = errors_array(res.errors.to_h, false).join(', ')
+        raise ContractError.new(message)
       end
     end
 
-    def parsed?(value)
-      call(value).success?
-    end
-
-    def errors_array(hsh)
+    def errors_array(hsh, decorate = true)
       res = []
 
       hsh.each do |key, value|
-        key = "[#{key}]"
+        key = if decorate
+                "[#{key}]"
+              else
+                key.to_s
+              end
 
         case value
         when String
@@ -44,18 +44,21 @@ module Apples
     end
   end
 
-  def self.build_schema(&block)
-    klass = Dry::Schema.Params(&block)
-    klass.extend(GrapeCoercible)
-  end
+  ColorString = Dry::Types['string'].constrained(included_in: %w(green red yellow))
 
   BasketSchema = Dry::Schema.Params do
     required(:color).filled(ColorString)
     required(:count).filled(:integer)
   end
 
-  OrderSchema = build_schema do
+  OrderSchema = Dry::Schema.Params do
     required(:baskets).array(BasketSchema)
+  end
+
+  class CreateOrderContract < ApiContract
+    params do
+      required(:order).filled(OrderSchema)
+    end
   end
 
   class Order
@@ -66,7 +69,7 @@ module Apples
     def self.create!(params)
       self.orders ||= []
 
-      raise "Unexpected!" unless OrderSchema.call(params).success?
+      raise "Unexpected!" unless CreateOrderContract.new.call(params).success?
 
       self.orders << params
 
@@ -78,14 +81,17 @@ module Apples
     format :json
     prefix :api
 
+    rescue_from ContractError do |e|
+      error!({error: e.message}, 400)
+    end
+
     resource :orders do
       desc 'Create new'
-      params do
-        requires :order, type: OrderSchema
-      end
       post do
-        order = Order.create!(declared(params)[:order])
-        body order
+        CreateOrderContract.new.validate!(params) do |attrs|
+          order = Order.create!(attrs)
+          body order
+        end
       end
     end
   end
